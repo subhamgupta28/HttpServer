@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+    </data>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="5dp"
+        android:padding="16dp"
+        tools:context=".MainActivity">
+
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/info"
+            style="@style/Widget.Material3.CardView.Outlined"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            app:cardCornerRadius="12dp">
+
+
+            <LinearLayout
+                android:id="@+id/qr_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/start_server"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="14dp"
+                        android:checked="true"
+                        android:text="Start Server" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:ems="15"
+                        android:text="Scaan this QR Code or Open below link in the browser"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
+
+                    <TextView
+                        android:id="@+id/host_address"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="4dp"
+                        android:text="http://localhost:8080/"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                        android:textColor="@color/colorPrimary" />
+
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/qr_image"
+                    android:layout_width="130dp"
+
+                    android:layout_height="130dp"
+                    android:layout_gravity="end|center_vertical" />
+
+
+            </LinearLayout>
+
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.airbnb.lottie.LottieAnimationView
+            android:layout_width="70dp"
+            android:layout_height="55dp"
+            android:layout_below="@id/info"
+            android:layout_gravity="center_vertical"
+            android:layout_marginTop="4dp"
+            app:lottie_autoPlay="true"
+            app:lottie_loop="true"
+            app:lottie_rawRes="@raw/server_gif" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/grid_layout"
+            android:text="Actions"
+            android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+
+        <GridLayout
+            android:id="@+id/grid_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/child3"
+            android:layout_marginBottom="12dp"
+            android:columnCount="2"
+            android:padding="4dp"
+            android:rowCount="2"
+
+            android:useDefaultMargins="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/open_file_explorer_btn"
+                style="?attr/materialIconButtonOutlinedStyle"
+                android:layout_columnWeight="1"
+                android:layout_gravity="fill"
+                android:text="Send"
+                app:cornerRadius="10dp"
+                app:icon="@drawable/baseline_file_upload_24" />
+
+            <com.google.android.material.button.MaterialButton
+                style="?attr/materialIconButtonOutlinedStyle"
+                android:layout_columnWeight="1"
+                android:id="@+id/receive_btn"
+                android:layout_gravity="fill"
+                android:text="Receive"
+                app:cornerRadius="10dp"
+                app:icon="@drawable/baseline_file_download_24" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/manage_user"
+                style="?attr/materialIconButtonOutlinedStyle"
+                android:layout_columnWeight="1"
+                android:layout_gravity="fill"
+                android:text="Manage"
+                app:cornerRadius="10dp"
+                app:icon="@drawable/baseline_person_add_24" />
+
+            <com.google.android.material.button.MaterialButton
+                style="?attr/materialIconButtonOutlinedStyle"
+                android:layout_columnWeight="1"
+                android:layout_gravity="fill"
+                android:text="Suspend"
+                app:cornerRadius="10dp"
+                app:icon="@drawable/baseline_block_24" />
+        </GridLayout>
+
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/child3"
+            style="@style/Widget.Material3.CardView.Outlined"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="10dp"
+            app:cardCornerRadius="10dp">
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:padding="6dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/logout_btn"
+                        style="?attr/materialIconButtonFilledTonalStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:cornerRadius="8dp"
+                        app:icon="@drawable/baseline_logout_24" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/setting_btn"
+                        style="?attr/materialIconButtonFilledStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:cornerRadius="8dp"
+                        app:icon="@drawable/baseline_settings_24" />
+
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/alert_btn"
+                        style="?attr/materialIconButtonFilledStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:cornerRadius="8dp"
+                        app:icon="@drawable/baseline_local_laundry_service" />
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/add_user"
+                    style="@style/Widget.Material3.FloatingActionButton.Tertiary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="2dp"
+                    android:text="ADD"
+                    app:cornerRadius="8dp"
+                    app:icon="@drawable/baseline_person_add_24" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </RelativeLayout>
+</layout>
