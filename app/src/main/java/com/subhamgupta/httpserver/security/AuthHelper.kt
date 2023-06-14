@@ -28,8 +28,8 @@ fun generateToken(user: User, password: String): String {
         tokenService.generate(
             config = tokenConfig,
             TokenClaim(
-                name = "username",
-                value = user.username
+                name = "uuid",
+                value = user.uuid
             )
         )
     } else ""

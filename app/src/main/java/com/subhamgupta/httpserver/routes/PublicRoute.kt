@@ -7,16 +7,14 @@ import com.subhamgupta.httpserver.db.UserDataSource
 import com.subhamgupta.httpserver.security.EncryptDecrypt
 import com.subhamgupta.httpserver.security.TokenConfig
 import com.subhamgupta.httpserver.security.generateToken
-import com.subhamgupta.httpserver.utils.AuthResponse
-import com.subhamgupta.httpserver.utils.AuthStatus
 import com.subhamgupta.httpserver.utils.Streaming
-import com.subhamgupta.httpserver.utils.checkAuth
 import com.subhamgupta.httpserver.utils.compressImage
 import com.subhamgupta.httpserver.utils.sendEvent
 import com.subhamgupta.httpserver.utils.toThumbBytes
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.Parameters
 import io.ktor.server.application.call
 import io.ktor.server.plugins.origin
 import io.ktor.server.request.receive
@@ -28,6 +26,8 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import io.ktor.server.sessions.sessions
+import io.ktor.server.sessions.set
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -39,6 +39,8 @@ fun Route.public(
     tokenConfig: TokenConfig,
     dataSource: UserDataSource
 ) {
+
+
     post("/enc") {
         try {
             val encryptedData = call.receive<Map<String, String>>()
@@ -49,41 +51,12 @@ fun Route.public(
         }
 
     }
-
     get("/gk") {
         val keys = EncryptDecrypt.generateKeys()
         val pubKey = keys["PUBLIC"] as PublicKey
         val strKey = pubKey.toString()
         Log.e("key", "strKey")
         call.respond(HttpStatusCode.Created, strKey)
-    }
-    get("/refresh") {
-        try {
-            val user = checkAuth(call, dataSource)
-            if (user != null) {
-                val token = generateToken(user, user.password)
-                if (token.isNotEmpty()) {
-                    call.respond(
-                        status = HttpStatusCode.OK,
-                        message = AuthResponse(
-                            status = AuthStatus.AUTHENTICATED,
-                            token = token,
-                            username = user.username,
-                            email = user.email,
-                            expiresIn = tokenConfig.expiresIn,
-                            hasAccessTo = "",
-                            userType = user.type
-                        )
-                    )
-                }
-            } else {
-                call.respond(HttpStatusCode.Unauthorized, "Invalid refresh token")
-            }
-        } catch (e: Exception) {
-            Log.e("server error", "$e")
-            call.respond(HttpStatusCode.BadRequest, "Something went wrong")
-        }
-
     }
     get("/thumb") {
         try {
@@ -114,6 +87,31 @@ fun Route.public(
             Log.e("server error", "$e")
         }
 
+    }
+    get("/file") {
+        try {
+            val params = call.request.queryParameters
+            val uri = params["uri"] ?: ""
+            val file = File(uri)
+            if (file.exists()) {
+                call.response.header(
+                    "Content-Disposition",
+                    "inline;filename=\"${file.name}\";filename*=utf-8''\"${file.name}\""
+                )
+                call.respondFile(file)
+            } else {
+                call.respondText(
+                    "File not found",
+                    status = HttpStatusCode.NotFound
+                )
+            }
+        } catch (e: Exception) {
+            Log.e("server error", "$e")
+            call.respondText(
+                "Something went wrong $e",
+                status = HttpStatusCode.Forbidden
+            )
+        }
     }
     get("/stream") {
         val clientIp = call.request.origin.remoteHost

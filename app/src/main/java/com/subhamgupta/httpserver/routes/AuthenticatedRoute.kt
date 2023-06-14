@@ -38,7 +38,7 @@ fun Route.mainApp(
     dataSource: UserDataSource
 ) {
     authenticate {
-        get("/info"){
+        get("/info") {
             val info = getDeviceInfo()
             call.respond(HttpStatusCode.OK, Gson().toJson(info))
         }
@@ -48,16 +48,10 @@ fun Route.mainApp(
                 status = HttpStatusCode.Unauthorized,
                 text = "No logged in user found"
             )
-            val role = dataSource.getUserAccess(user)
+
             val userObj = UserObj(
-                username = user.username,
-                email = user.email,
-                type = user.type,
-                timestamp = user.timestamp.epochSeconds,
-                status = user.status,
-                allowedFiles = role?.allowedFiles?.toList() ?: emptyList(),
-                allowedFolder = role?.allowedFolder?.toList() ?: emptyList(),
-                accessRole = role?.accessRole ?: ""
+
+
             )
             call.respond(HttpStatusCode.OK, userObj)
         }
@@ -69,14 +63,9 @@ fun Route.mainApp(
                 text = "No logged in user found"
             )
             if (path.isNotEmpty()) {
-                var files = emptyMap<String, Any>()
+
                 val root = File(Environment.getExternalStorageDirectory(), path).toString()
-                if (user.type == "Admin") {
-                    files = getFolderMap(root)
-                } else {
-                    val role = dataSource.getUserAccess(user)
-                    val allowedFolder = role?.allowedFolder?.toList()
-                }
+                val files = getFolderMap(root)
                 val sp = path.split("/")
                 var rootFolder = path
                 if (sp.size != 1) {
@@ -93,21 +82,9 @@ fun Route.mainApp(
                     text = "No logged in user found"
                 )
                 val folders = getFolders()
-                if (user.type == "Admin") {
-                    call.respond(HttpStatusCode.OK, folders)
-                } else {
-                    user.let { it1 -> dataSource.getUserAccess(it1) }?.let { access ->
-                        val allowedFolder = folders.filter {
-                            access.allowedFolder.contains(it.filename)
-                        }
-                        call.respond(HttpStatusCode.OK, allowedFolder)
-                        return@get
-                    }
-                    call.respondText(
-                        status = HttpStatusCode.Unauthorized,
-                        text = "You're not allowed to see any folder"
-                    )
-                }
+
+                call.respond(HttpStatusCode.OK, folders)
+
 //                call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
             } catch (e: Exception) {
                 Log.e("server error", "$e")
@@ -125,8 +102,7 @@ fun Route.mainApp(
                     status = HttpStatusCode.Unauthorized,
                     text = "No logged in user found"
                 )
-                val roles = dataSource.getUserAccess(user)
-                Log.e("server roles", "$user $roles")
+
                 val videos = getVideos().filter {
                     it.uri.contains("/$id/")
                 }
@@ -144,34 +120,7 @@ fun Route.mainApp(
                 )
             }
         }
-        get("/files") {
-            try {
-                val user = checkAuth(call, dataSource) ?: return@get call.respondText(
-                    status = HttpStatusCode.Unauthorized,
-                    text = "No logged in user found"
-                )
 
-                val params = call.request.queryParameters
-                val start = params["start"] ?: "1"
-                val limit = params["limit"] ?: "20"
-
-                val listFiles = getVideos()
-                val pageSize = limit.toInt()
-                val startIndex = (start.toInt() - 1) * pageSize
-                val endIndex = minOf(startIndex + pageSize, listFiles.size)
-                val pageItems = listFiles.subList(startIndex, endIndex)
-
-                call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
-                call.respond(HttpStatusCode.OK, pageItems)
-
-            } catch (e: Exception) {
-                Log.e("server error", "$e")
-                call.respondText(
-                    "Something wen wrong $e",
-                    status = HttpStatusCode.Forbidden
-                )
-            }
-        }
         post("/upload") {
             val user = checkAuth(call, dataSource) ?: return@post call.respondText(
                 status = HttpStatusCode.Unauthorized,
@@ -199,7 +148,6 @@ fun Route.mainApp(
                         val receivedFile = ReceivedFile()
                         receivedFile.fileName = file.name
                         receivedFile.uri = file.absolutePath
-                        receivedFile.username = user.username
                         dataSource.saveReceivedFile(receivedFile)
                         part.streamProvider().use { its ->
                             file.outputStream().buffered().use {
@@ -212,7 +160,6 @@ fun Route.mainApp(
                 }
                 val map = mapOf(
                     "success" to true,
-                    "user" to user.username,
                     "msg" to "file uploaded successfully",
                     "location" to "Download",
                     "files" to listOfFiles
@@ -255,6 +202,5 @@ fun Route.mainApp(
         }
 
     }
-
 }
 

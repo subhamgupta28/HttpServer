@@ -42,7 +42,6 @@ object HttpServerManager {
     }
 
     fun createHttpServer(context: Context): NettyApplicationEngine {
-
         val environment = applicationEngineEnvironment {
             log = LoggerFactory.getLogger("ktor.application")
             connector {
@@ -58,6 +57,7 @@ object HttpServerManager {
             }
             module(Application::module)
         }
+
         return embeddedServer(Netty, environment)
     }
 }

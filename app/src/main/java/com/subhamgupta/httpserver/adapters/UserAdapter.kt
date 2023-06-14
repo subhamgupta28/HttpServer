@@ -17,8 +17,8 @@ class UserAdapter: RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     ){
         private val binding = UserItemBinding.bind(itemView)
 
-        fun onBind(user: User){
-            binding.username.text = user.username
+        fun onBind(user: User, position: Int){
+            "You".also { binding.username.text = it }
             binding.lastLogin.text = user.timestamp.epochSeconds.toString()
             binding.status.text = user.status
         }
@@ -36,7 +36,7 @@ class UserAdapter: RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        (holder as MyHolder).onBind(userList[position])
+        (holder as MyHolder).onBind(userList[position], position)
     }
 
     override fun getItemCount(): Int {

@@ -53,12 +53,6 @@
                 android:layout_marginTop="6dp"
                 android:text="Status" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/edit_btn"
-                style="?attr/materialIconButtonStyle"
-                android:layout_row="0"
-                app:cornerRadius="8dp"
-                app:icon="@drawable/baseline_edit_24" />
 
         </GridLayout>
 

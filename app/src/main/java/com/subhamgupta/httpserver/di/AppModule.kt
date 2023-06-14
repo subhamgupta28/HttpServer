@@ -6,6 +6,7 @@ import com.subhamgupta.httpserver.domain.model.InvalidateToken
 import com.subhamgupta.httpserver.domain.model.LoggedInUser
 import com.subhamgupta.httpserver.domain.model.ReceivedFile
 import com.subhamgupta.httpserver.domain.model.RequestLog
+import com.subhamgupta.httpserver.domain.model.ServerSession
 import com.subhamgupta.httpserver.domain.model.User
 import com.subhamgupta.httpserver.domain.model.UserBasedRoles
 import com.subhamgupta.httpserver.utils.SettingStorage
@@ -33,6 +34,7 @@ object AppModule {
     fun providesRealm(): Realm {
         val config = RealmConfiguration.Builder(
             schema = setOf(
+                ServerSession::class,
                 User::class,
                 InvalidateToken::class,
                 UserBasedRoles::class,

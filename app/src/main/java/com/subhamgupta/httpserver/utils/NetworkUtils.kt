@@ -31,3 +31,22 @@ fun InetAddress.isLocalAddress(): Boolean {
     }
     return false
 }
+fun getConnectedDevices(): List<InetAddress> {
+    val devices = mutableListOf<InetAddress>()
+    val interfaces = NetworkInterface.getNetworkInterfaces()
+
+    while (interfaces.hasMoreElements()) {
+        val networkInterface = interfaces.nextElement()
+        val addresses = networkInterface.inetAddresses
+
+        while (addresses.hasMoreElements()) {
+            val address = addresses.nextElement()
+
+            if (!address.isLoopbackAddress && address.isReachable(3000)) {
+                devices.add(address)
+            }
+        }
+    }
+
+    return devices
+}

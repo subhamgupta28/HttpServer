@@ -7,7 +7,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.subhamgupta.httpserver.R
 import com.subhamgupta.httpserver.databinding.AccessItemBinding
 import com.subhamgupta.httpserver.domain.model.FolderObj
-import com.subhamgupta.httpserver.domain.model.User
 
 class AccessItemAdapter(
     val selectedFolder: MutableSet<FolderObj>

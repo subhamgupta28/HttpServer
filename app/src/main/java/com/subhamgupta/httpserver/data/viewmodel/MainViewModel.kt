@@ -4,16 +4,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.subhamgupta.httpserver.data.repository.MainRepository
 import com.subhamgupta.httpserver.domain.model.FileObj
-import com.subhamgupta.httpserver.domain.model.FolderObj
 import com.subhamgupta.httpserver.domain.model.NotificationObj
 import com.subhamgupta.httpserver.domain.model.User
 import com.subhamgupta.httpserver.utils.ConfirmToAcceptLoginEvent
+import com.subhamgupta.httpserver.utils.UserSession
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import org.mongodb.kbson.ObjectId
 import javax.inject.Inject
 
 @HiltViewModel
@@ -23,6 +22,9 @@ class MainViewModel @Inject constructor(
 
     private val _hostAddress = MutableStateFlow("")
     val hostAddress = _hostAddress.asStateFlow()
+
+    private val _password = MutableStateFlow("")
+    val password = _password.asStateFlow()
 
     private val _videos = MutableStateFlow<List<FileObj>>(emptyList())
     val videos = _videos.asStateFlow()
@@ -48,17 +50,21 @@ class MainViewModel @Inject constructor(
     val folders = _folders.asStateFlow()
 
     fun getStorage() = repository.getStorage()
+    fun getUserSession() = repository.userSession
     fun getDb() = repository.getDb()
 
     fun init() = viewModelScope.launch {
+        repository.setupUser()
         repository.handleEvents(_confirmLogin)
         repository.fetchVideoLocal(_videos)
         repository.fetchImageLocal(_images)
         repository.manageSession()
     }
-
     fun fetchUsers() = viewModelScope.launch(Dispatchers.IO) {
         repository.fetchUsers(_users)
+    }
+    fun getPassword() = viewModelScope.launch {
+        _password.value = repository.getPassword()
     }
 
     fun startServer() = viewModelScope.launch(Dispatchers.IO) {
@@ -70,35 +76,15 @@ class MainViewModel @Inject constructor(
         repository.stopServer()
     }
 
-    fun registerUser(username: String, email: String, password: String) = viewModelScope.launch {
-        repository.registerUser(username, email, password, _userState)
-    }
-
-    fun registerUser(
-        username: String,
-        password: String,
-        selectedFolder: List<FolderObj>,
-        hasAccessTo: String
-    ) = viewModelScope.launch {
-        repository.registerUser(username, password, _userState, selectedFolder, hasAccessTo)
-    }
-
-    fun loginUser(username: String, password: String) = viewModelScope.launch {
-        repository.loginUser(username, password, _userState)
-    }
-
-    fun checkUser() = viewModelScope.launch {
-        _userPresent.value = repository.checkUser()
-    }
     fun sendNotification(notificationObj: NotificationObj) = viewModelScope.launch {
         repository.sendNotification(notificationObj)
     }
 
-    fun updateUserStatus(id: ObjectId, string: String) = viewModelScope.launch {
-        repository.updateUserStatus(id, string)
-    }
-
     fun getAllFolders() = viewModelScope.launch {
         repository.getAllFolders(_folders)
+    }
+
+    fun setUserSession(userSession: UserSession) {
+        repository.userSession = userSession
     }
 }

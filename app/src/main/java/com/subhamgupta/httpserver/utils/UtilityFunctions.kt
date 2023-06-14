@@ -28,20 +28,23 @@ import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
+
 suspend fun checkAuth(call: ApplicationCall, dataSource: UserDataSource): User? {
     val tokenData = decodeJwt(getTokenFromCall(call))
-    val id = tokenData["userId"] ?: tokenData["username"]
+    val id = tokenData["uuid"] ?: tokenData["uuid"]
 
     Log.e("token id", "$id")
-    return dataSource.getUserByUsername(id.toString().replace("\"", ""))
+    val user = dataSource.getCurrentUser(id.toString().replace("\"", ""))
+    Log.e("user", "$user")
+    return user
 }
 
 suspend fun checkAuth(token: String, dataSource: UserDataSource): User? {
     val tokenData = decodeJwt(token)
-    val id = tokenData["userId"] ?: tokenData["username"]
+    val id = tokenData["uuid"] ?: tokenData["uuid"]
 
     Log.e("token id", "$id")
-    return dataSource.getUserByUsername(id.toString().replace("\"", ""))
+    return dataSource.getCurrentUser(id.toString().replace("\"", ""))
 }
 
 fun decodeJwt(token: String): Map<String, Any> {
@@ -186,4 +189,16 @@ fun getDeviceInfo(): Map<String, Any> {
     return map
 }
 
-
+fun decryptPassword(encryptedMessage: String, shift: Int): String {
+    val decryptedMessage = StringBuilder()
+    for (char in encryptedMessage) {
+        if (char.isLetter()) {
+            val baseChar = if (char.isUpperCase()) 'A' else 'a'
+            val shiftedChar = ((char.toInt() - baseChar.toInt() - shift + 26) % 26 + baseChar.toInt()).toChar()
+            decryptedMessage.append(shiftedChar)
+        } else {
+            decryptedMessage.append(char)
+        }
+    }
+    return decryptedMessage.toString()
+}

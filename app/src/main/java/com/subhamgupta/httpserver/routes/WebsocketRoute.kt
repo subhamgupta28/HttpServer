@@ -1,6 +1,7 @@
 package com.subhamgupta.httpserver.routes
 
 import android.util.Log
+import com.google.gson.Gson
 import com.subhamgupta.httpserver.db.UserDataSource
 import com.subhamgupta.httpserver.hashing.HashingService
 import com.subhamgupta.httpserver.security.TokenConfig
@@ -10,15 +11,14 @@ import com.subhamgupta.httpserver.utils.ConfirmToAcceptLoginEvent
 import com.subhamgupta.httpserver.utils.Request
 import com.subhamgupta.httpserver.utils.UserSession
 import com.subhamgupta.httpserver.utils.checkAuth
+import com.subhamgupta.httpserver.utils.decryptPassword
 import com.subhamgupta.httpserver.utils.sendEvent
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.plugins.origin
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.websocket.webSocket
-import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
-import io.ktor.websocket.close
 import io.ktor.websocket.readText
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -31,27 +31,23 @@ fun Route.websockets(
 ) {
 
     webSocket("/session") {
-        val query = call.request.queryParameters
-        val token = query["token"] ?: ""
-        if (token.isEmpty())
-            close(
-                CloseReason(
-                    CloseReason.Codes.CANNOT_ACCEPT,
-                    "token invalid"
-                )
-            )
-
+        val token = call.request.queryParameters["token"] ?: return@webSocket
         val user = checkAuth(token, dataSource) ?: return@webSocket
 //        sendEvent(UserSession(this, user))
         for (frame in incoming) {
             when (frame) {
                 is Frame.Text -> {
+
+
+                    Log.e("session", frame.readText())
                     sendEvent(UserSession(this, user))
+
                 }
 
                 else -> {}
             }
         }
+
     }
     webSocket("/auth") {
         val clientIp = call.request.origin.remoteAddress
@@ -59,7 +55,6 @@ fun Route.websockets(
         val query = call.request.queryParameters
 
         val session = this
-
         try {
             for (frame in incoming) {
                 when (frame) {
@@ -69,14 +64,16 @@ fun Route.websockets(
                             Log.e("server", "$rawData")
 //                            val decrypt = decryptData(rawData)
                             val request = Json.decodeFromString<AuthRequest>(rawData)
-                            val user = dataSource.getUserByUsername(request.username)
+                            val user = dataSource.getCurrentUser()
                             if (user == null) {
-                                call.respond(HttpStatusCode.Conflict, "Invalid credentials")
+                                call.respond(HttpStatusCode.Conflict, "Invalid Credentials")
                                 return@webSocket
                             }
-                            val token = generateToken(user, request.password)
+                            val token = generateToken(user, decryptPassword(request.password,10))
+
                             Log.e("server", "user $token")
                             if (token.isNotEmpty()) {
+//                                call.sessions.set(HttpSession(user.uuid, token))
                                 sendEvent(
                                     ConfirmToAcceptLoginEvent(
                                         session,
@@ -86,10 +83,10 @@ fun Route.websockets(
                                     )
                                 )
                             } else {
-                                close(
-                                    CloseReason(
-                                        CloseReason.Codes.TRY_AGAIN_LATER,
-                                        "invalid_password"
+                                send(
+                                    Frame.Text(
+                                        Gson().toJson(mapOf("msg" to "invalid_password"))
+
                                     )
                                 )
                             }

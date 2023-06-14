@@ -132,6 +132,8 @@ dependencies {
 
     //mongodb
     implementation("io.realm.kotlin:library-base:1.8.0")
+// https://mvnrepository.com/artifact/com.google.zxing/core
+    implementation("com.google.zxing:core:3.2.1")
 
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")

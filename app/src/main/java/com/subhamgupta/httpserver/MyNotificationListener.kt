@@ -1,4 +1,5 @@
 package com.subhamgupta.httpserver
+
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -6,9 +7,9 @@ import android.provider.Settings
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
-import kotlinx.coroutines.flow.MutableStateFlow
 
 class MyNotificationListener : NotificationListenerService() {
+
 
     override fun onCreate() {
         super.onCreate()
@@ -32,7 +33,7 @@ class MyNotificationListener : NotificationListenerService() {
             val title = it.notification.extras.getString("android.title")
             val text = it.notification.extras.getCharSequence("android.text")
             val map = mapOf("package" to packageName, "title" to title, "text" to text)
-            listener.value = map
+            listener?.onMessageReceived(map)
             Log.d(TAG, "New notification posted: $packageName, Title: $title, Text: $text")
 
             // Process the notification as needed
@@ -52,10 +53,10 @@ class MyNotificationListener : NotificationListenerService() {
         }
     }
 
+
     companion object {
         private const val TAG = "MyNotificationListener"
-        val listener = MutableStateFlow<Map<String, CharSequence?>>(mapOf())
-
+        var listener: MyListener? = null
         fun isNotificationListenerEnabled(context: Context): Boolean {
             val componentName = ComponentName(context, MyNotificationListener::class.java)
             val flat = Settings.Secure.getString(

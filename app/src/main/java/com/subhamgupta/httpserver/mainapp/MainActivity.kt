@@ -19,18 +19,20 @@ import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
 import com.google.zxing.BarcodeFormat
 import com.journeyapps.barcodescanner.BarcodeEncoder
+import com.subhamgupta.httpserver.MyListener
 import com.subhamgupta.httpserver.MyNotificationListener
 import com.subhamgupta.httpserver.R
 import com.subhamgupta.httpserver.data.viewmodel.MainViewModel
 import com.subhamgupta.httpserver.databinding.ActivityMainBinding
 import com.subhamgupta.httpserver.domain.model.NotificationObj
 import com.subhamgupta.httpserver.utils.AuthResponse
+import com.subhamgupta.httpserver.utils.AuthSession
 import com.subhamgupta.httpserver.utils.AuthStatus
 import com.subhamgupta.httpserver.utils.ConfirmToAcceptLoginEvent
 import com.subhamgupta.httpserver.utils.JsonHelper
-import com.subhamgupta.httpserver.utils.NetworkScanner
 import com.subhamgupta.httpserver.utils.Streaming
 import com.subhamgupta.httpserver.utils.Transfer
+import com.subhamgupta.httpserver.utils.UserSession
 import com.subhamgupta.httpserver.utils.getFileNameFromUri
 import com.subhamgupta.httpserver.utils.receiveEvent
 import com.subhamgupta.httpserver.utils.uriForMediaWithFilename
@@ -45,26 +47,18 @@ import kotlinx.coroutines.withContext
 
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), MyListener {
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
+    private val selectedFiles = mutableListOf<String>()
+    private var authSession: AuthSession? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-//        viewModel.checkUser()
-//        lifecycleScope.launchWhenStarted {
-//            viewModel.userPresent.collect {
-//                if (!it) {
-//                    startActivity(Intent(this@MainActivity, RegisterUserActivity::class.java))
-//                    finish()
-//                } else {
-//                    init()
-//                }
-//            }
-//        }
+        init()
     }
 
     private fun showQR(str: String) {
@@ -126,8 +120,6 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private val selectedFiles = mutableListOf<String>()
-
 
     private fun addUser() {
         val intent = Intent(this, BaseActivity::class.java)
@@ -151,21 +143,15 @@ class MainActivity : AppCompatActivity() {
             PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
             PackageManager.DONT_KILL_APP
         )
-        val ns = NetworkScanner(this)
-        val mp = ns.scanNetwork()
-        Log.e("network", "found $mp")
+        viewModel.getPassword()
         lifecycleScope.launchWhenStarted {
-            MyNotificationListener.listener.collect {
-                Log.e("main notify", "$it")
-
-                val notificationObj = NotificationObj(
-                    notify = true,
-                    notifyObj = it
-                )
-                viewModel.sendNotification(notificationObj)
-
+            viewModel.password.collect {
+                binding.password.text = it
             }
         }
+        MyNotificationListener.listener = this
+
+
         if (!MyNotificationListener.isNotificationListenerEnabled(this)) {
             MyNotificationListener.requestNotificationListenerPermission(this)
         }
@@ -193,6 +179,13 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this@MainActivity, BaseActivity::class.java)
             intent.putExtra("upload", true)
             startActivity(intent)
+        }
+        binding.qrScanBtn.setOnClickListener {
+
+        }
+        receiveEvent<UserSession>() {
+            viewModel.setUserSession(it)
+            Log.e("user session", "$it")
         }
         receiveEvent<Transfer> {
             val intent = Intent(this@MainActivity, BaseActivity::class.java)
@@ -224,18 +217,16 @@ class MainActivity : AppCompatActivity() {
                     .setPositiveButton("Accept") { _, _ ->
                         launch {
                             withContext(Dispatchers.IO) {
-                                viewModel.updateUserStatus(it.user._id, "Logged In")
+//                                session.call.sessions.set(HttpSession(it.user.uuid, it.token))
                                 session.send(
                                     Frame.Text(
                                         JsonHelper.jsonEncode(
                                             AuthResponse(
                                                 status = AuthStatus.AUTHENTICATED,
                                                 token = it.token,
-                                                username = it.user.username,
-                                                email = it.user.email,
+                                                uuid = it.user.uuid,
                                                 expiresIn = it.tokenConfig.expiresIn,
-                                                hasAccessTo = "A,B,C",
-                                                userType = "Normal"
+                                                userType = it.user.type
                                             )
                                         )
                                     )
@@ -260,9 +251,10 @@ class MainActivity : AppCompatActivity() {
 
             }
         }
-//        receiveEvent<Request>{
-//            showSnackBar("Request from ${it.from}")
-//        }
+
+        receiveEvent<AuthSession> {
+            authSession = it
+        }
     }
 
     private fun showSnackBar(msg: String) {
@@ -280,5 +272,15 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         viewModel.stopServer()
         super.onDestroy()
+    }
+
+    override fun onMessageReceived(message: Map<String, CharSequence?>) {
+        Log.e("main notify", "$message")
+
+        val notificationObj = NotificationObj(
+            notify = true,
+            notifyObj = message
+        )
+        viewModel.sendNotification(notificationObj)
     }
 }

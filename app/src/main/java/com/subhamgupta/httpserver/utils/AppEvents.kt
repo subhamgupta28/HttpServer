@@ -13,6 +13,10 @@ class ConfirmToAcceptLoginEvent(
     val tokenConfig: TokenConfig,
     val token: String
 )
+class AuthSession(
+    val session: DefaultWebSocketServerSession,
+    val user: User
+)
 class Transfer(
     val status: String,
     val fileList: List<FileObj>,

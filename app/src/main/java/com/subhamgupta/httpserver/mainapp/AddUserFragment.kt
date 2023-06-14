@@ -53,12 +53,7 @@ class AddUserFragment : Fragment() {
             val password = binding.password.text
             if (!username.isNullOrEmpty() || !password.isNullOrEmpty()) {
                 Log.e("folders", "$selectedFolder")
-                viewModel.registerUser(
-                    username.toString(),
-                    password.toString(),
-                    selectedFolder.toList(),
-                    ""
-                )
+
             }
         }
     }

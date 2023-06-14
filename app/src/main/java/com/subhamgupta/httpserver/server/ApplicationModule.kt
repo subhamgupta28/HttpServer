@@ -6,15 +6,18 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.subhamgupta.httpserver.AUDIENCE
 import com.subhamgupta.httpserver.ISSUER
 import com.subhamgupta.httpserver.JWT_SECRET
+import com.subhamgupta.httpserver.MyApp
 import com.subhamgupta.httpserver.db.MongoUserDataSource
 import com.subhamgupta.httpserver.hashing.SHA256HashingService
+import com.subhamgupta.httpserver.routes.HttpSession
+import com.subhamgupta.httpserver.routes.RedirectException
 import com.subhamgupta.httpserver.routes.authentication
 import com.subhamgupta.httpserver.routes.mainApp
 import com.subhamgupta.httpserver.routes.public
+import com.subhamgupta.httpserver.routes.registerSessionNotFoundRedirect
+import com.subhamgupta.httpserver.routes.secretHashKey
 import com.subhamgupta.httpserver.routes.websockets
 import com.subhamgupta.httpserver.security.TokenConfig
-import com.subhamgupta.httpserver.utils.Request
-import com.subhamgupta.httpserver.utils.sendEvent
 import io.ktor.http.CacheControl
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -42,14 +45,19 @@ import io.ktor.server.plugins.forwardedheaders.ForwardedHeaders
 import io.ktor.server.plugins.origin
 import io.ktor.server.plugins.partialcontent.PartialContent
 import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.response.respondRedirect
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.routing
+import io.ktor.server.sessions.SessionTransportTransformerMessageAuthentication
+import io.ktor.server.sessions.Sessions
+import io.ktor.server.sessions.cookie
 import io.ktor.server.websocket.WebSockets
 import kotlinx.serialization.json.Json
 import org.slf4j.event.Level
 
 
 fun Application.module() {
+    val settingStorage = MyApp.instance.settingStorage
 
     val dataSource = MongoUserDataSource
     environment.monitor.subscribe(ApplicationStarted) { application ->
@@ -86,11 +94,21 @@ fun Application.module() {
         allowHeader(HttpHeaders.ContentType)
     }
     install(StatusPages){
+        exception<RedirectException> { call, cause ->
+            call.respondRedirect(cause.path, cause.permanent)
+        }
+        registerSessionNotFoundRedirect<HttpSession>("/login")
         exception<Throwable> { call, cause ->
             Log.e("SERVER ERROR", "$cause")
             call.respondText(text = "500: $cause" , status = HttpStatusCode.InternalServerError)
         }
     }
+    install(Sessions) {
+        cookie<HttpSession>("session_id") {
+            transform(SessionTransportTransformerMessageAuthentication(secretHashKey))
+        }
+    }
+
 
     install(ConditionalHeaders)
     install(WebSockets)
@@ -105,7 +123,8 @@ fun Application.module() {
         onCall { call ->
             call.request.origin.apply {
                 val request = "Request URL: $scheme://$remoteHost:$localPort$uri"
-                sendEvent(Request(this.remoteHost, "", request))
+//                sendEvent(Request(this.remoteHost, "", request))
+//                Log.e("requests", request)
             }
         }
     }
@@ -121,7 +140,7 @@ fun Application.module() {
     val tokenConfig = TokenConfig(
         issuer = ISSUER,
         audience = AUDIENCE,
-        expiresIn = 365L * 1000L * 60L * 60L * 24L,
+        expiresIn = 3L * 1000L * 60L * 60L * 24L,
         secret = JWT_SECRET
     )
     val hashingService = SHA256HashingService()
@@ -152,7 +171,7 @@ fun Application.module() {
         }
         websockets(tokenConfig, dataSource, hashingService)
         public(tokenConfig, dataSource)
-        authentication(tokenConfig, dataSource, hashingService)
+        authentication(settingStorage, tokenConfig, dataSource, hashingService)
         mainApp(dataSource)
     }
 }

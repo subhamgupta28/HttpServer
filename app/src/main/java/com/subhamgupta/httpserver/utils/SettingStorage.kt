@@ -23,18 +23,18 @@ class SettingStorage @Inject constructor(
         val preferences = context.dataStore.data.first()
         return preferences[dataStoreKey]
     }
-    suspend fun getUserName(): String {
-        return read("userName") ?:""
+    suspend fun getUUID(): String {
+        return read("uuid") ?:""
     }
 
-    suspend fun setUserName(str: String) {
-        save("userName", str)
+    suspend fun setUUID(str: String) {
+        save("uuid", str)
     }
-    suspend fun getToken(): String {
-        return read("token") ?:""
+    suspend fun getPassword(): String {
+        return read("pass") ?:""
     }
 
-    suspend fun setToken(str: String) {
-        save("token", str)
+    suspend fun setPassword(str: String) {
+        save("pass", str)
     }
 }

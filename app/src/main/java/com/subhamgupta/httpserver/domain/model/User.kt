@@ -4,7 +4,6 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.annotations.PrimaryKey
-import kotlinx.serialization.Serializable
 import org.mongodb.kbson.ObjectId
 
 
@@ -13,10 +12,8 @@ class User() : RealmObject {
     var _id: ObjectId = ObjectId.invoke()
 
     @Index
-    var username: String = ""
+    var uuid: String = ""
 
-    @Index
-    var email: String = ""
     var password: String = ""
     var salt: String = ""
     var type: String = ""

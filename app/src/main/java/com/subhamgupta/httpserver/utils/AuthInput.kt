@@ -4,9 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AuthRequest(
-    val username: String,
     val password: String,
-    val email: String,
     val browserName: String = "",
     val browserVersion: String = "",
     val osName: String = "",
@@ -19,11 +17,9 @@ data class AuthRequest(
 data class AuthResponse(
     val status: AuthStatus,
     val token: String = "",
-    val username: String,
-    val email: String,
+    val uuid: String,
     val expiresIn: Long,
     val userType: String,
-    val hasAccessTo: String
 )
 
 enum class AuthStatus {
