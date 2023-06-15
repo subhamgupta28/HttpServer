@@ -14,7 +14,6 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.engine.sslConnector
 import io.ktor.server.netty.Netty
 import io.ktor.server.netty.NettyApplicationEngine
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileOutputStream
 import java.security.KeyStore
@@ -43,7 +42,6 @@ object HttpServerManager {
 
     fun createHttpServer(context: Context): NettyApplicationEngine {
         val environment = applicationEngineEnvironment {
-            log = LoggerFactory.getLogger("ktor.application")
             connector {
                 port = PORT
             }

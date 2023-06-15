@@ -124,7 +124,7 @@ fun Application.module() {
             call.request.origin.apply {
                 val request = "Request URL: $scheme://$remoteHost:$localPort$uri"
 //                sendEvent(Request(this.remoteHost, "", request))
-//                Log.e("requests", request)
+                Log.e("requests", request)
             }
         }
     }
@@ -169,7 +169,7 @@ fun Application.module() {
             useResources = true
             react("web1")
         }
-        websockets(tokenConfig, dataSource, hashingService)
+        websockets(tokenConfig, dataSource)
         public(tokenConfig, dataSource)
         authentication(settingStorage, tokenConfig, dataSource, hashingService)
         mainApp(dataSource)

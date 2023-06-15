@@ -24,22 +24,17 @@ import com.subhamgupta.httpserver.utils.SettingStorage
 import com.subhamgupta.httpserver.utils.Transfer
 import com.subhamgupta.httpserver.utils.UserSession
 import com.subhamgupta.httpserver.utils.receiveEventHandler
-import io.ktor.client.HttpClient
-import io.ktor.client.request.get
-import io.ktor.client.request.parameter
-import io.ktor.client.request.url
 import io.ktor.websocket.Frame
 import io.realm.kotlin.Realm
 import io.realm.kotlin.notifications.InitialResults
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.launch
 import java.io.File
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.collections.set
 import kotlin.random.Random
 
 
@@ -47,8 +42,7 @@ import kotlin.random.Random
 class MainRepository @Inject constructor(
     private val realm: Realm,
     private val settingStorage: SettingStorage,
-    private val application: Application,
-    private val client: HttpClient
+    private val application: Application
 ) {
     private val db = MongoUserDataSource
     var userSession: UserSession? = null
@@ -59,7 +53,7 @@ class MainRepository @Inject constructor(
 
     fun getDb() = db
 
-    suspend fun startServer(_hostAddress: MutableStateFlow<String>) {
+    fun startServer(_hostAddress: MutableStateFlow<String>) {
         val simpleTextApi =
             String.format("http://%s:%s", NetworkUtils.getLocalIpAddress(), PORT)
         Log.e("ip", simpleTextApi)
@@ -203,6 +197,7 @@ class MainRepository @Inject constructor(
         setImages(imagesPaths)
         imageCursor.close()
     }
+
     suspend fun fetchUsers(users: MutableStateFlow<List<User>>) {
         db.getAllUser().collect {
             when (it) {
@@ -217,6 +212,7 @@ class MainRepository @Inject constructor(
             }
         }
     }
+
     suspend fun timer(period: Long, initialDelay: Long) = flow {
         delay(initialDelay)
         while (true) {
@@ -226,61 +222,20 @@ class MainRepository @Inject constructor(
     }
 
     suspend fun sendNotification(notificationObj: NotificationObj) {
-        sendESP(notificationObj)
         if (userSession != null) {
             val json = Gson().toJson(notificationObj)
             Log.e("notification", "sent $json")
-
             userSession?.session?.send(Frame.Text(json))
         }
     }
 
-    private suspend fun sendESP(notificationObj: NotificationObj) = coroutineScope {
-        launch {
-            var r = 10
-            var g = 10
-            var b = 10
-            val bt = 2
-            val pkg = notificationObj.notifyObj["package"]
-            if (pkg != null) {
-
-                if (pkg.toString().contains("whatsapp")) {
-                    g = 255
-                    b = 100
-                    r = 50
-                }
-                if (pkg.toString().contains("instagram")) {
-                    r = 255
-                    b = 255
-                }
-                if (pkg.toString().contains("gmail")) {
-                    g = 200
-                    b = 200
-                    r = 255
-                }
-
-                try {
-                    val res = client.get {
-                        url("http://192.168.29.67/set")
-                        parameter("r", r)
-                        parameter("g", g)
-                        parameter("b", b)
-                        parameter("bht", bt)
-                    }
-                    Log.e("response", "${res.status} $res")
-                }catch (e: Exception){
-                    Log.e("response", "$e")
-                }
-            }
-        }
-    }
 
 
     suspend fun manageSession() {
 
     }
 
-    private val charPool : List<Char> = ('A'..'Z') + ('0'..'9')
+    private val charPool: List<Char> = ('A'..'Z') + ('0'..'9')
     val password = (1..8)
         .map { Random.nextInt(0, charPool.size).let { charPool[it] } }
         .joinToString("")
@@ -292,7 +247,7 @@ class MainRepository @Inject constructor(
         val user = settingStorage.getPassword()
         Log.e("setupUser", "$localUUID $user")
 
-        if (localUUID.isEmpty()){
+        if (localUUID.isEmpty()) {
             settingStorage.setUUID(uuid)
             settingStorage.setPassword(password)
             val saltedHash = hashingService.generateSaltedHash(password)

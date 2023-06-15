@@ -13,9 +13,7 @@ import android.util.Log
 import androidx.core.database.getStringOrNull
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import com.subhamgupta.httpserver.IV
 import com.subhamgupta.httpserver.JWT_SECRET
-import com.subhamgupta.httpserver.KEY
 import com.subhamgupta.httpserver.MyApp
 import com.subhamgupta.httpserver.db.UserDataSource
 import com.subhamgupta.httpserver.domain.model.FileObj
@@ -23,10 +21,7 @@ import com.subhamgupta.httpserver.domain.model.User
 import io.ktor.server.application.ApplicationCall
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.util.Base64
-import javax.crypto.Cipher
-import javax.crypto.spec.IvParameterSpec
-import javax.crypto.spec.SecretKeySpec
+import kotlin.math.min
 
 
 suspend fun checkAuth(call: ApplicationCall, dataSource: UserDataSource): User? {
@@ -48,7 +43,7 @@ suspend fun checkAuth(token: String, dataSource: UserDataSource): User? {
 }
 
 fun decodeJwt(token: String): Map<String, Any> {
-    Log.e("token", "$token")
+    Log.e("token", token)
     val algorithm = Algorithm.HMAC256(JWT_SECRET)
     val jwtVerifier = JWT.require(algorithm).build()
     val decodedJWT = jwtVerifier.verify(token)
@@ -78,7 +73,7 @@ fun compressImage(
     val imageWidth = options.outWidth
     var scaleFactor = 1
     if (imageHeight > maxHeight || imageWidth > maxWidth) {
-        scaleFactor = Math.min(imageWidth / maxWidth, imageHeight / maxHeight)
+        scaleFactor = min(imageWidth / maxWidth, imageHeight / maxHeight)
     }
     options.inJustDecodeBounds = false
     options.inSampleSize = scaleFactor
@@ -124,28 +119,12 @@ fun getFolderMap(rootPath: String): Map<String, Any> {
     return folderMap
 }
 
-fun decryptData(data: String): String {
-    val encryptedBytes = Base64.getDecoder().decode(data)
-    Log.e("server", "$data")
-
-    val cipher = Cipher.getInstance("AES/CBC/NoPadding")
-    val keySpec = SecretKeySpec(KEY.toByteArray(), "AES")
-    val ivSpec = IvParameterSpec(IV.toByteArray())
-
-    cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec)
-
-    val original = cipher.doFinal(encryptedBytes)
-    val originalString = String(original)
-    println(originalString.trim())
-    Log.e("server", "${originalString.replace("\u003F", "")} $original")
-    return originalString.replace(Regex("\\?+"), "")
-}
 
 fun uriForMediaWithFilename(
     resolver: ContentResolver,
     filename: String
 ): String {
-    val columns = arrayOf<String>(BaseColumns._ID, MediaStore.MediaColumns.DATA)
+    val columns = arrayOf(BaseColumns._ID, MediaStore.MediaColumns.DATA)
     val selection: String = MediaStore.MediaColumns.DATA + " LIKE ?"
     val selectionArgs = arrayOf("%$filename")
     val collection =
@@ -156,11 +135,8 @@ fun uriForMediaWithFilename(
     )
     var path = ""
     val pathCol = cursor?.getColumnIndex(MediaStore.Files.FileColumns.DATA)
-    val nameCol = cursor?.getColumnIndex(MediaStore.Files.FileColumns.DISPLAY_NAME)
     while (cursor!!.moveToNext()) {
         path = pathCol?.let { cursor.getStringOrNull(it) }.toString()
-        val name = nameCol?.let { cursor.getStringOrNull(it) }
-        Log.e("file", "$path")
     }
     cursor.close()
     return path
@@ -194,7 +170,7 @@ fun decryptPassword(encryptedMessage: String, shift: Int): String {
     for (char in encryptedMessage) {
         if (char.isLetter()) {
             val baseChar = if (char.isUpperCase()) 'A' else 'a'
-            val shiftedChar = ((char.toInt() - baseChar.toInt() - shift + 26) % 26 + baseChar.toInt()).toChar()
+            val shiftedChar = ((char.code - baseChar.code - shift + 26) % 26 + baseChar.code).toChar()
             decryptedMessage.append(shiftedChar)
         } else {
             decryptedMessage.append(char)

@@ -10,7 +10,7 @@ import kotlin.reflect.KClass
 fun redirect(path: String, permanent: Boolean = false): Nothing =
     throw RedirectException(path, permanent)
 
-data class HttpSession(val user: String, val token: String)
+data class HttpSession(val uuid: String, val token: String)
 
 val secretHashKey = hex("6819b57a326945c1968f45236581")
 

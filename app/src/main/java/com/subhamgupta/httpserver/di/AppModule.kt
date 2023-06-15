@@ -14,7 +14,6 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import io.ktor.client.HttpClient
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import javax.inject.Singleton
@@ -23,11 +22,6 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
-    @Singleton
-    @Provides
-    fun providesClient(): HttpClient {
-        return HttpClient()
-    }
 
     @Singleton
     @Provides
@@ -58,13 +52,11 @@ object AppModule {
     fun provideMainRepository(
         realm: Realm,
         settingStorage: SettingStorage,
-        application: Application,
-        client: HttpClient
+        application: Application
     ): MainRepository = MainRepository(
         realm,
         settingStorage,
-        application,
-        client
+        application
     )
 
 

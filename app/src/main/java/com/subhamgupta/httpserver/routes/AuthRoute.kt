@@ -6,14 +6,10 @@ import com.subhamgupta.httpserver.db.UserDataSource
 import com.subhamgupta.httpserver.hashing.HashingService
 import com.subhamgupta.httpserver.security.TokenConfig
 import com.subhamgupta.httpserver.security.generateToken
-import com.subhamgupta.httpserver.utils.AuthRequest
-import com.subhamgupta.httpserver.utils.Request
 import com.subhamgupta.httpserver.utils.SettingStorage
 import com.subhamgupta.httpserver.utils.decryptPassword
-import com.subhamgupta.httpserver.utils.sendEvent
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
-import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
@@ -37,7 +33,6 @@ fun Route.authentication(
             call.respond(HttpStatusCode.Conflict, "Invalid Credentials")
             return@get
         }
-
         if (session == null) {
             val token = generateToken(user, decryptPassword(params["password"] ?: "", 10))
             Log.e("redirect", "$token $user")
@@ -51,25 +46,5 @@ fun Route.authentication(
     post("/logout") {
         call.respond(message = "Hello")
     }
-    post("/signup") {
-
-        val request = call.receive<AuthRequest>()
-
-        Log.e("server", "$request")
-
-
-        val saltedHash = hashingService.generateSaltedHash(request.password)
-
-
-        try {
-
-        } catch (e: Exception) {
-            call.respond(HttpStatusCode.BadRequest)
-            Log.e("server error", "$e")
-        }
-
-        sendEvent(Request("${call.request.headers["Authorization"]}", "signup", ""))
-    }
-
 
 }
