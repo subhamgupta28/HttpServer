@@ -34,14 +34,13 @@ fun Route.authentication(
             return@get
         }
         if (session == null) {
-            val token = generateToken(user, decryptPassword(params["password"] ?: "", 10))
+            val token = generateToken(user, decryptPassword(params["password"] ?: "", 10), tokenConfig)
             Log.e("redirect", "$token $user")
             call.sessions.set(HttpSession(user.uuid, token))
         } else {
             call.respond(status = HttpStatusCode.OK, Gson().toJson(mapOf("auth" to true)))
         }
         call.respond(HttpStatusCode.OK)
-        redirect("/")
     }
     post("/logout") {
         call.respond(message = "Hello")

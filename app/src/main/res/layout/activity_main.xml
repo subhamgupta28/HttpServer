@@ -100,7 +100,7 @@
                     android:layout_weight="1"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                    android:textAppearance="@style/TextAppearance.Material3.TitleSmall"
                     android:text="Use this password to login" />
                 <TextView
                     android:id="@+id/password"
@@ -108,7 +108,7 @@
                     android:textColor="@color/colorPrimary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                    android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
                     android:text="password" />
             </LinearLayout>
 
@@ -117,16 +117,7 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <com.journeyapps.barcodescanner.CameraPreview
-            android:layout_width="200dp"
 
-            android:layout_height="200dp"
-            android:layout_below="@id/pass_layout"
-            android:layout_centerHorizontal="true"
-            android:layout_marginStart="12dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="12dp"
-            android:layout_marginBottom="12dp" />
 
         <TextView
             android:layout_width="wrap_content"

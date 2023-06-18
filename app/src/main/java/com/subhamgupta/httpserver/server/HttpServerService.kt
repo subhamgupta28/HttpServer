@@ -34,6 +34,7 @@ class HttpServerService : LifecycleService() {
                 }
             } catch (ex: Exception) {
                 ex.printStackTrace()
+                stop()
                 Log.e("error HttpServerService", "$ex")
             }
         }

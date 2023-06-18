@@ -29,9 +29,12 @@ class MyNotificationListener : NotificationListenerService() {
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
         sbn?.let {
+            val app = it.notification.extras
             val packageName = it.packageName
             val title = it.notification.extras.getString("android.title")
             val text = it.notification.extras.getCharSequence("android.text")
+
+
             val map = mapOf("package" to packageName, "title" to title, "text" to text)
             listener?.onMessageReceived(map)
             Log.d(TAG, "New notification posted: $packageName, Title: $title, Text: $text")
@@ -46,9 +49,7 @@ class MyNotificationListener : NotificationListenerService() {
             val packageName = it.packageName
             val title = it.notification.extras.getString("android.title")
             val text = it.notification.extras.getCharSequence("android.text")
-
             Log.d(TAG, "Notification removed: $packageName, Title: $title, Text: $text")
-
             // Process the notification removal as needed
         }
     }

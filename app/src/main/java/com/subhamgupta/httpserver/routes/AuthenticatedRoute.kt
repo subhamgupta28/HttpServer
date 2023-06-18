@@ -124,7 +124,7 @@ fun Route.mainApp(
         post("/upload") {
             val user = checkAuth(call, dataSource) ?: return@post call.respondText(
                 status = HttpStatusCode.Unauthorized,
-                text = "No logged in user found"
+                text = "You are not Authorized"
             )
             try {
                 val multipart = call.receiveMultipart()
@@ -164,13 +164,10 @@ fun Route.mainApp(
                     "location" to "Download",
                     "files" to listOfFiles
                 )
-
-                call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
                 call.respond(HttpStatusCode.Created, Gson().toJson(map))
 //                sendEvent(Transfer("START", listOfFiles))
             } catch (ex: Exception) {
                 ex.printStackTrace()
-                call.respond(HttpStatusCode.BadRequest, ex.message ?: "")
             }
         }
         get("/download") {

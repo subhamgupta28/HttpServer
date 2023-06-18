@@ -10,11 +10,9 @@ import com.subhamgupta.httpserver.MyApp
 import com.subhamgupta.httpserver.db.MongoUserDataSource
 import com.subhamgupta.httpserver.hashing.SHA256HashingService
 import com.subhamgupta.httpserver.routes.HttpSession
-import com.subhamgupta.httpserver.routes.RedirectException
 import com.subhamgupta.httpserver.routes.authentication
 import com.subhamgupta.httpserver.routes.mainApp
 import com.subhamgupta.httpserver.routes.public
-import com.subhamgupta.httpserver.routes.registerSessionNotFoundRedirect
 import com.subhamgupta.httpserver.routes.secretHashKey
 import com.subhamgupta.httpserver.routes.websockets
 import com.subhamgupta.httpserver.security.TokenConfig
@@ -45,7 +43,6 @@ import io.ktor.server.plugins.forwardedheaders.ForwardedHeaders
 import io.ktor.server.plugins.origin
 import io.ktor.server.plugins.partialcontent.PartialContent
 import io.ktor.server.plugins.statuspages.StatusPages
-import io.ktor.server.response.respondRedirect
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.routing
 import io.ktor.server.sessions.SessionTransportTransformerMessageAuthentication
@@ -54,6 +51,7 @@ import io.ktor.server.sessions.cookie
 import io.ktor.server.websocket.WebSockets
 import kotlinx.serialization.json.Json
 import org.slf4j.event.Level
+import java.util.Date
 
 
 fun Application.module() {
@@ -67,20 +65,13 @@ fun Application.module() {
         options { _, outgoingContent ->
             when (outgoingContent.contentType?.withoutParameters()) {
                 ContentType.Text.CSS, ContentType.Application.JavaScript -> CachingOptions(
-                    CacheControl.MaxAge(maxAgeSeconds = 3600 * 24 * 30)
+                    CacheControl.MaxAge(maxAgeSeconds = 3600 * 2)
                 )
 
                 else -> null
             }
         }
     }
-//    install(ShutDownUrl.ApplicationCallPlugin) {
-//        shutDownUrl = "/shutdown"
-//        exitCodeSupplier = { 0 }
-//    }
-
-
-
 
     install(CORS) {
 //        anyHost()
@@ -93,14 +84,10 @@ fun Application.module() {
         allowHeader(HttpHeaders.AccessControlAllowOrigin)
         allowHeader(HttpHeaders.ContentType)
     }
-    install(StatusPages){
-        exception<RedirectException> { call, cause ->
-            call.respondRedirect(cause.path, cause.permanent)
-        }
-        registerSessionNotFoundRedirect<HttpSession>("/login")
+    install(StatusPages) {
         exception<Throwable> { call, cause ->
             Log.e("SERVER ERROR", "$cause")
-            call.respondText(text = "500: $cause" , status = HttpStatusCode.InternalServerError)
+            call.respondText(text = "500: $cause", status = HttpStatusCode.InternalServerError)
         }
     }
     install(Sessions) {
@@ -140,7 +127,8 @@ fun Application.module() {
     val tokenConfig = TokenConfig(
         issuer = ISSUER,
         audience = AUDIENCE,
-        expiresIn = 3L * 1000L * 60L * 60L * 24L,
+//        expiresIn = 1L * 1000L * 60L * 60L * 24L,//1 DAY
+        expiresIn = 1000L * 60L * 60L * 4L,//1 DAY
         secret = JWT_SECRET
     )
     val hashingService = SHA256HashingService()
@@ -157,6 +145,7 @@ fun Application.module() {
                     .build()
             }
             validate { cred ->
+                Log.e("expired !!", "${Date(tokenConfig.expiresIn)} ${cred.payload.expiresAt}")
                 if (cred.payload.audience.contains(tokenConfig.audience)) {
                     JWTPrincipal(cred.payload)
                 } else null

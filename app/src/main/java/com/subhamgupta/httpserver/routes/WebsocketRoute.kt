@@ -45,7 +45,7 @@ fun Route.websockets(
     webSocket("/auth") {
         val query = call.request.queryParameters
         val uuid = UUID.randomUUID().toString()
-//        call.sessions.set(HttpSession(uuid, uuid.reversed()))
+
         val session = this
         try {
             for (frame in incoming) {
@@ -61,7 +61,7 @@ fun Route.websockets(
                                 call.respond(HttpStatusCode.Conflict, "Invalid Credentials")
                                 return@webSocket
                             }
-                            val token = generateToken(user, decryptPassword(request.password,10))
+                            val token = generateToken(user, decryptPassword(request.password,10), tokenConfig)
 
                             Log.e("server", "user $token")
                             if (token.isNotEmpty()) {
